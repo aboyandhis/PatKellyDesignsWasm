@@ -1,0 +1,58 @@
+@page "/page/{Slug}"
+@page "/{Slug}"
+@inject GhostService Ghost
+
+<h1>Page: @Slug</h1>
+
+@if (GhostPage == null || needRefresh)
+{
+    <p><em>Loading page...</em></p>
+}
+else
+{
+    <p>Page: @GhostPage.Title</p>
+    <div id="page-contents">@((MarkupString)GhostPage.Html)</div>
+}
+
+@code {
+    private string slug;
+    [Parameter]
+    public string Slug
+    {
+        get
+        {
+            return slug;
+        }
+
+        set
+        {
+            if (slug != null)
+            {
+                needRefresh = slug != value;
+            }
+            slug = value;
+        }
+    }
+
+    private bool needRefresh = true;
+
+    public Ghost.Page GhostPage;
+    protected override async Task OnInitializedAsync()
+    {
+        //Console.WriteLine($"posts\n{await Ghost.GetPageBySlugJsonStringAsync(Slug)}");
+        if (needRefresh)
+        {
+            GhostPage = await Ghost.GetPageBySlugAsync(Slug);
+            needRefresh = false;
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        if (needRefresh)
+        {
+            GhostPage = await Ghost.GetPageBySlugAsync(Slug);
+            needRefresh = false;
+        }
+    }
+}
